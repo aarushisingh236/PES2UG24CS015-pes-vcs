@@ -137,8 +137,22 @@ int index_status(const Index *index) {
 int index_load(Index *index) {
     // TODO: Implement index loading
     // (See Lab Appendix for logical steps)
-    (void)index;
+    FILE *f = fopen(".pes/index", "rb");
+
+if (!f) {
+    // No index file yet → start empty
+    index->count = 0;
+    return 0;
+}
+
+// Read entire index struct
+if (fread(index, sizeof(Index), 1, f) != 1) {
+    fclose(f);
     return -1;
+}
+
+fclose(f);
+return 0;
 }
 
 // Save the index to .pes/index atomically.
@@ -154,8 +168,16 @@ int index_load(Index *index) {
 int index_save(const Index *index) {
     // TODO: Implement atomic index saving
     // (See Lab Appendix for logical steps)
-    (void)index;
+    FILE *f = fopen(".pes/index", "wb");
+if (!f) return -1;
+
+if (fwrite(index, sizeof(Index), 1, f) != 1) {
+    fclose(f);
     return -1;
+}
+
+fclose(f);
+return 0;
 }
 
 // Stage a file for the next commit.
@@ -170,6 +192,47 @@ int index_save(const Index *index) {
 int index_add(Index *index, const char *path) {
     // TODO: Implement file staging
     // (See Lab Appendix for logical steps)
-    (void)index; (void)path;
+   // 1. Open file
+FILE *f = fopen(path, "rb");
+if (!f) return -1;
+
+// 2. Get file size
+fseek(f, 0, SEEK_END);
+long size = ftell(f);
+rewind(f);
+
+// 3. Read file content
+void *data = malloc(size);
+if (!data) {
+    fclose(f);
     return -1;
+}
+
+fread(data, 1, size, f);
+fclose(f);
+
+// 4. Write blob object
+ObjectID hash;
+if (object_write(OBJ_BLOB, data, size, &hash) != 0) {
+    free(data);
+    return -1;
+}
+free(data);
+
+// 5. Create new index entry
+IndexEntry *e = &index->entries[index->count++];
+
+e->mode = 0100644;  // regular file
+
+e->hash = hash;
+
+struct stat st;
+stat(path, &st);
+e->mtime_sec = st.st_mtime;
+e->size = st.st_size;
+
+strcpy(e->path, path);
+
+// 6. Save index
+return index_save(index);
 }
