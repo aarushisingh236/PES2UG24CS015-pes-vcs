@@ -143,7 +143,7 @@ int head_read(ObjectID *id_out) {
         fclose(f);
         line[strcspn(line, "\r\n")] = '\0';
     }
-    return hex_to_hash(line, id_out);
+    return hex_to_hash(line, commit_id_out);
 }
 
 // Update the current branch ref to point to a new commit atomically.
