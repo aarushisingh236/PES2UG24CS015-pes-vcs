@@ -65,9 +65,57 @@ for (int i = 0; i < index->count; i++) {
 }
 
 printf("\nUnstaged changes:\n");
+
+for (int i = 0; i < index->count; i++) {
+    IndexEntry *e = &index->entries[i];
+
+    struct stat st;
+    if (stat(e->path, &st) != 0) {
+        printf("  deleted: %s\n", e->path);
+        continue;
+    }
+
+    if (st.st_mtime != e->mtime_sec || st.st_size != e->size) {
+        printf("  modified: %s\n", e->path);
+    }
+}
+
 printf("\nUntracked files:\n");
 
-return 0;       
+DIR *dir = opendir(".");
+if (dir) {
+    struct dirent *entry;
+
+    while ((entry = readdir(dir)) != NULL) {
+    // Skip hidden files
+    if (entry->d_name[0] == '.') continue;
+
+    // Skip build files
+    if (strstr(entry->d_name, ".o")) continue;
+    if (strcmp(entry->d_name, "pes") == 0) continue;
+    if (strcmp(entry->d_name, "Makefile") == 0) continue;
+
+    // Skip source code (optional but recommended)
+    if (strstr(entry->d_name, ".c")) continue;
+    if (strstr(entry->d_name, ".h")) continue;
+
+    int found = 0;
+    for (int i = 0; i < index->count; i++) {
+        if (strcmp(entry->d_name, index->entries[i].path) == 0) {
+            found = 1;
+            break;
+        }
+    }
+
+    if (!found) {
+        printf("  untracked: %s\n", entry->d_name);
+    }
+}
+
+    closedir(dir);
+}
+
+return 0;
 }
 
 // ─── TODO: Implement these ───────────────────────────────────────────────────

@@ -194,7 +194,6 @@ int head_update(const ObjectID *new_commit) {
 //
 // Returns 0 on success, -1 on error.
 int commit_create(const char *message, ObjectID *commit_id_out) {
-    // 1. Build tree from index
 ObjectID tree_id;
 if (tree_from_index(&tree_id) != 0) return -1;
 
@@ -239,7 +238,11 @@ if (object_write(OBJ_COMMIT, data, len, commit_id_out) != 0) {
 free(data);
 
 // 9. Update HEAD
+<<<<<<< HEAD
 if (head_update(id_out) != 0) return -1;
+=======
+if (head_update(commit_id_out) != 0) return -1;
+>>>>>>> 259dfe2 (cleanup warnings)
 
 return 0;
 }
