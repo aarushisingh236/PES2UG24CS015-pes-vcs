@@ -93,24 +93,19 @@ int object_exists(const ObjectID *id) {
 //
 // Returns 0 on success, -1 on error.
 int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out) {
-    // TODO: Implement
-
-// 1. Build header
-char header[64];
-const char *type_str =
-    (type == OBJ_BLOB) ? "blob" :
-    (type == OBJ_TREE) ? "tree" : "commit";
-
-int header_len = sprintf(header, "%s %zu", type_str, len);
-
 // 2. Build full object (header + '\0' + data)
 size_t total_size = header_len + 1 + len;
 char *buffer = malloc(total_size);
+=======
+size_t total = header_len + 1 + len;
+unsigned char *buffer = malloc(total);
+>>>>>>> f2c9f3f (your message)
 
 memcpy(buffer, header, header_len);
 buffer[header_len] = '\0';
 memcpy(buffer + header_len + 1, data, len);
 
+<<<<<<< HEAD
 // 3. Compute hash
 compute_hash(buffer, total_size, id_out);
 
@@ -139,10 +134,34 @@ snprintf(temp_path, sizeof(temp_path), "%s/tmpXXXXXX", dir);
 // create temp file
 int fd = mkstemp(temp_path);
 if (fd < 0) {
+=======
+// compute hash
+compute_hash(buffer, total, id_out);
+
+// build path
+char path[256];
+object_path(id_out, path, sizeof(path));
+
+// create directories
+mkdir(".pes", 0755);
+mkdir(".pes/objects", 0755);
+
+char hex[65];
+hash_to_hex(id_out, hex);
+
+char dir[256];
+snprintf(dir, sizeof(dir), ".pes/objects/%.2s", hex);
+mkdir(dir, 0755);
+
+// write file
+FILE *f = fopen(path, "wb");
+if (!f) {
+>>>>>>> f2c9f3f (your message)
     free(buffer);
     return -1;
 }
 
+<<<<<<< HEAD
 // 8. Write data
 if (write(fd, buffer, total_size) != (ssize_t)total_size) {
     close(fd);
@@ -166,11 +185,18 @@ if (dir_fd >= 0) {
     fsync(dir_fd);
     close(dir_fd);
 }
+=======
+fwrite(buffer, 1, total, f);
+fclose(f);
+>>>>>>> f2c9f3f (your message)
 
 free(buffer);
 return 0;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> f2c9f3f (your message)
 // Read an object from the store.
 //
 // Steps:
@@ -194,6 +220,7 @@ return 0;
 // The caller is responsible for calling free(*data_out).
 // Returns 0 on success, -1 on error (file not found, corrupt, etc.).
 int object_read(const ObjectID *id, ObjectType *type_out, void **data_out, size_t *len_out) {
+<<<<<<< HEAD
     // TODO: Implement
 
 char path[512];
@@ -204,10 +231,20 @@ FILE *f = fopen(path, "rb");
 if (!f) return -1;
 
 // 2. Read entire file
+=======
+char path[256];
+object_path(id, path, sizeof(path));
+
+FILE *f = fopen(path, "rb");
+if (!f) return -1;
+
+// read file
+>>>>>>> f2c9f3f (your message)
 fseek(f, 0, SEEK_END);
 long size = ftell(f);
 rewind(f);
 
+<<<<<<< HEAD
 char *buffer = malloc(size);
 if (fread(buffer, 1, size, f) != (size_t)size) {
     fclose(f);
@@ -226,12 +263,29 @@ if (memcmp(&computed, id, sizeof(ObjectID)) != 0) {
 }
 
 // 4. Find header separator
+=======
+unsigned char *buffer = malloc(size);
+fread(buffer, 1, size, f);
+fclose(f);
+
+// verify hash
+ObjectID computed;
+compute_hash(buffer, size, &computed);
+
+if (memcmp(&computed, id, sizeof(ObjectID)) != 0) {
+    free(buffer);
+    return -1;
+}
+
+// find header separator
+>>>>>>> f2c9f3f (your message)
 char *null_pos = memchr(buffer, '\0', size);
 if (!null_pos) {
     free(buffer);
     return -1;
 }
 
+<<<<<<< HEAD
 // 5. Parse type
 if (strncmp(buffer, "blob", 4) == 0)
     *type_out = OBJ_BLOB;
@@ -247,6 +301,19 @@ else {
 // 6. Extract data
 char *data_start = null_pos + 1;
 size_t data_size = size - (data_start - buffer);
+=======
+// detect type
+if (strncmp((char*)buffer, "blob", 4) == 0)
+    *type_out = OBJ_BLOB;
+else if (strncmp((char*)buffer, "tree", 4) == 0)
+    *type_out = OBJ_TREE;
+else
+    *type_out = OBJ_COMMIT;
+
+// extract data
+char *data_start = null_pos + 1;
+size_t data_size = size - (data_start - (char*)buffer);
+>>>>>>> f2c9f3f (your message)
 
 void *out = malloc(data_size);
 memcpy(out, data_start, data_size);
