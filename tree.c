@@ -14,6 +14,8 @@
 #include <stdlib.h>
 #include "pes.h"
 #include <string.h>
+#include "index.h"
+#include "pes.h"
 #include <dirent.h>
 #include <sys/stat.h>
 
@@ -26,6 +28,8 @@ int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out
 #define MODE_DIR       0040000
 
 // ─── PROVIDED ───────────────────────────────────────────────────────────────
+
+int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out);
 
 // Determine the object mode for a filesystem path.
 uint32_t get_file_mode(const char *path) {
@@ -126,7 +130,7 @@ int tree_serialize(const Tree *tree, void **data_out, size_t *len_out) {
 //   - index_load      : load the staged files into memory
 //   - strchr          : find the first '/' in a path to separate directories from files
 //   - strncmp         : compare prefixes to group files belonging to the same subdirectory
-//   - Recursion       : you will likely want to create a recursive helper function 
+// - Recursion       : you will likely want to create a recursive helper function 
 //                       (e.g., `write_tree_level(entries, count, depth)`) to handle nested dirs.
 //   - tree_serialize  : convert your populated Tree struct into a binary buffer
 //   - object_write    : save that binary buffer to the store as OBJ_TREE
