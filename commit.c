@@ -231,7 +231,7 @@ size_t len;
 if (commit_serialize(&commit, &data, &len) != 0) return -1;
 
 // 8. Store commit object
-if (object_write(OBJ_COMMIT, data, len, id_out) != 0) {
+if (object_write(OBJ_COMMIT, data, len, commit_id_out) != 0) {
     free(data);
     return -1;
 }
